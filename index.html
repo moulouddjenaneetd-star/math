@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>تعلّم الرياضيات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Cairo',sans-serif;
+  background:linear-gradient(145deg,#FFF8E7 0%,#FFF1D6 100%);
+  min-height:100vh; direction:rtl;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+
+/* ── WRAPPER ── */
+.wrap{
+  width:100%; max-width:620px;
+  height:100vh; max-height:820px;
+  display:flex; flex-direction:column;
+  padding:0 12px 12px;
+}
+
+/* ── PROGRESS DOTS ── */
+.dots{
+  display:flex; justify-content:center; gap:7px;
+  padding:14px 0 8px; flex-shrink:0;
+}
+.dot{
+  width:10px; height:10px; border-radius:50%;
+  background:#ddd; transition:all .3s;
+}
+.dot.on{ background:#FF6B35; transform:scale(1.35); }
+.dot.done{ background:#6BCB77; }
+
+/* ── CARD ── */
+.card{
+  display:none; flex-direction:column;
+  background:#fff; border-radius:28px;
+  box-shadow:0 10px 40px rgba(0,0,0,.10);
+  flex:1; overflow:hidden;
+  animation:slideUp .38s ease;
+}
+.card.active{display:flex;}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* card header strip */
+.card-head{
+  padding:18px 24px 14px;
+  display:flex; align-items:center; gap:12px;
+  flex-shrink:0;
+}
+.card-head .icon{font-size:2.2rem;}
+.card-head h2{font-size:1.55rem; font-weight:900; color:#fff;}
+
+/* card body */
+.card-body{
+  flex:1; overflow-y:auto; padding:20px 24px;
+  display:flex; flex-direction:column; align-items:center;
+  gap:16px; text-align:center;
+}
+.card-body p{font-size:1.15rem; line-height:1.85; color:#444; font-weight:700;}
+.card-body .sub{font-size:.95rem; color:#aaa; font-weight:400;}
+
+/* ── THEMES ── */
+.theme-welcome .card-head{background:linear-gradient(135deg,#6A0DAD,#9B59B6);}
+.theme-num    .card-head{background:linear-gradient(135deg,#1565C0,#42A5F5);}
+.theme-add    .card-head{background:linear-gradient(135deg,#1B5E20,#4CAF50);}
+.theme-sub    .card-head{background:linear-gradient(135deg,#BF360C,#FF7043);}
+.theme-done   .card-head{background:linear-gradient(135deg,#F57F17,#FFB300);}
+
+/* ── EQUATION BOX ── */
+.eq-box{
+  background:#f8f8f8; border-radius:18px;
+  padding:14px 28px; font-size:2.6rem; font-weight:900;
+  direction:ltr; letter-spacing:2px;
+  border:3px solid #eee;
+}
+.eq-box.add-col{color:#1B5E20; border-color:#a5d6a7;}
+.eq-box.sub-col{color:#BF360C; border-color:#ffab91;}
+.eq-ans{color:#6A0DAD;}
+
+/* ── OBJECTS ROW ── */
+.obj-row{
+  display:flex; flex-wrap:wrap; justify-content:center;
+  gap:10px; font-size:2.5rem; min-height:56px; align-items:center;
+}
+.obj{display:inline-block; animation:popIn .4s ease both;}
+.obj.dim{opacity:.22; filter:grayscale(1);}
+@keyframes popIn{0%{transform:scale(0);opacity:0}65%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+@keyframes popOut{0%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.6}100%{transform:scale(0);opacity:0}}
+.obj.removing{animation:popOut .4s ease forwards !important;}
+
+/* ── STEP BOX ── */
+.step-box{
+  background:#fff9f0; border:2px solid #ffe082;
+  border-radius:16px; padding:14px 20px;
+  width:100%; font-size:1.1rem; font-weight:700; color:#5d4037;
+  opacity:0; transition:opacity .4s;
+}
+.step-box.show{opacity:1;}
+.step-box.add-step{background:#f1fff1; border-color:#a5d6a7; color:#1B5E20;}
+.step-box.sub-step{background:#fff3f0; border-color:#ffab91; color:#BF360C;}
+
+/* ── NUMBER GRID (card 2) ── */
+.num-grid{
+  display:grid; grid-template-columns:repeat(5,1fr);
+  gap:10px; width:100%; direction:ltr;
+}
+.num-tile{
+  background:#fff; border:3px solid #ddd; border-radius:16px;
+  font-size:1.8rem; font-weight:900; padding:14px 0;
+  cursor:pointer; transition:all .18s; text-align:center;
+  color:#1565C0;
+}
+.num-tile:hover{transform:translateY(-3px); border-color:#42A5F5; background:#E3F2FD;}
+.num-tile.sel{border-color:#1565C0; background:#1565C0; color:#fff; transform:scale(1.08);}
+.num-display{
+  min-height:70px; width:100%;
+  background:#f0f4ff; border-radius:18px;
+  display:flex; flex-wrap:wrap; justify-content:center;
+  align-items:center; gap:8px; font-size:2.4rem; padding:12px;
+}
+.num-word{font-size:1.6rem; font-weight:900; color:#1565C0; min-height:36px;}
+
+/* ── TWO GROUPS ── */
+.groups-row{
+  display:flex; align-items:center; justify-content:center;
+  gap:12px; flex-wrap:wrap; width:100%;
+}
+.group-box{
+  background:#f8f8f8; border-radius:18px; border:3px dashed #ccc;
+  padding:14px 16px; min-width:110px; min-height:72px;
+  display:flex; flex-wrap:wrap; justify-content:center;
+  align-items:center; gap:8px; font-size:2.2rem;
+  transition:all .3s;
+}
+.group-box.add-g{border-color:#a5d6a7; background:#f1fff1;}
+.group-box.sub-g{border-color:#ffab91; background:#fff3f0;}
+.op-sign{font-size:2.2rem; color:#888; font-weight:900;}
+
+/* ── NUMBER LINE ── */
+.nl-outer{width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+.nl-inner{position:relative; padding:50px 20px 16px; min-width:max-content; direction:ltr;}
+.nl-track{display:flex; align-items:center;}
+.nl-dot{
+  width:38px; height:38px; border-radius:50%;
+  background:#f0f0f0; border:3px solid #ccc;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.82rem; font-weight:900; flex-shrink:0;
+  transition:background .3s, border-color .3s, transform .25s;
+}
+.nl-dot.start  {background:#E3F2FD; border-color:#42A5F5; color:#1565C0;}
+.nl-dot.trail  {background:#FFF9C4; border-color:#FFD600; color:#7d5200;}
+.nl-dot.cur    {background:#C8E6C9; border-color:#43A047; color:#1B5E20; transform:scale(1.28);}
+.nl-dot.cur-sub{background:#FFCCBC; border-color:#FF5722; color:#BF360C; transform:scale(1.28);}
+.nl-conn{width:16px; height:5px; background:#ddd; flex-shrink:0; border-radius:3px; transition:background .3s;}
+.nl-conn.trail{background:#FFD600;}
+.nl-frog{
+  position:absolute; top:4px; font-size:2rem;
+  transform:translateX(-50%);
+  transition:left .5s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.2));
+}
+.nl-frog.hop{animation:fHop .5s ease;}
+@keyframes fHop{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-22px)}}
+.nl-label{
+  font-size:1.05rem; font-weight:700; color:#666; margin-top:4px;
+  text-align:center;
+}
+
+/* ── REPLAY BTN ── */
+.replay-btn{
+  background:#fff; border:2px solid #ddd; border-radius:50px;
+  font-family:inherit; font-size:1rem; font-weight:700;
+  color:#888; padding:8px 22px; cursor:pointer;
+  transition:all .15s;
+}
+.replay-btn:hover{border-color:#FF6B35; color:#FF6B35; background:#fff5f0;}
+
+/* ── MASCOT ── */
+.mascot{font-size:5rem; animation:float 3s ease-in-out infinite; display:block;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+
+/* ── SUMMARY LIST ── */
+.summary-item{
+  display:flex; align-items:center; gap:12px;
+  background:#f8f8f8; border-radius:14px;
+  padding:12px 18px; width:100%; font-size:1.1rem; font-weight:700; color:#333;
+  animation:popIn .4s ease both;
+}
+.summary-item .badge{
+  font-size:1.5rem; width:44px; height:44px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.go-btn{
+  padding:16px 40px; border:none; border-radius:50px;
+  font-family:inherit; font-size:1.25rem; font-weight:900; color:#fff;
+  background:linear-gradient(135deg,#6A0DAD,#9B59B6);
+  box-shadow:0 6px 0 rgba(0,0,0,.2); cursor:pointer;
+  transition:transform .13s, box-shadow .13s;
+}
+.go-btn:hover{transform:translateY(-3px); box-shadow:0 9px 0 rgba(0,0,0,.2);}
+
+/* ── NAV BAR ── */
+.nav-bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 4px 0; flex-shrink:0;
+  direction:ltr;
+}
+.nav-btn{
+  padding:12px 26px; border:none; border-radius:50px;
+  font-family:inherit; font-size:1.1rem; font-weight:900; cursor:pointer;
+  transition:all .14s; box-shadow:0 4px 0 rgba(0,0,0,.15);
+}
+.nav-btn:hover{transform:translateY(-2px); box-shadow:0 7px 0 rgba(0,0,0,.15);}
+.nav-btn:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,.15);}
+#prevBtn{background:#e8e8e8; color:#666;}
+#nextBtn{background:#FF6B35; color:#fff;}
+#prevBtn:disabled{opacity:.35; pointer-events:none;}
+.card-num{font-size:.95rem; font-weight:700; color:#aaa;}
+
+/* ── CONFETTI ── */
+.cf{position:fixed;top:-14px;z-index:9999;border-radius:3px;pointer-events:none;animation:cfFall 2s ease-in forwards;}
+@keyframes cfFall{to{transform:translateY(105vh) rotate(720deg);opacity:0}}
+
+@media(max-width:440px){
+  .card-body{padding:14px 16px; gap:12px;}
+  .eq-box{font-size:2.1rem; padding:12px 20px;}
+  .obj-row{font-size:2.1rem;}
+  .num-tile{font-size:1.5rem;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="dots" id="dots"></div>
+
+  <!-- ══ CARD 1: WELCOME ══ -->
+  <div class="card theme-welcome active" id="c1">
+    <div class="card-head"><span class="icon">📚</span><h2>تعلّم الرياضيات!</h2></div>
+    <div class="card-body">
+      <span class="mascot">🦁</span>
+      <p>مرحباً! أنا <strong>ليو</strong>!<br>سنتعلم معاً الجمع والطرح خطوة بخطوة 😊</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+        <div style="background:#f1fff1;border:3px solid #a5d6a7;border-radius:18px;padding:14px 22px;font-size:1.2rem;font-weight:900;color:#1B5E20;">➕ الجمع<br><span style="font-size:.9rem;font-weight:400;">نضيف أكثر</span></div>
+        <div style="background:#fff3f0;border:3px solid #ffab91;border-radius:18px;padding:14px 22px;font-size:1.2rem;font-weight:900;color:#BF360C;">➖ الطرح<br><span style="font-size:.9rem;font-weight:400;">نأخذ بعيداً</span></div>
+      </div>
+      <p class="sub">اضغط "التالي" لنبدأ!</p>
+    </div>
+  </div>
+
+  <!-- ══ CARD 2: NUMBERS 0-9 ══ -->
+  <div class="card theme-num" id="c2">
+    <div class="card-head"><span class="icon">🔢</span><h2>الأرقام من 0 إلى 9</h2></div>
+    <div class="card-body">
+      <p>اضغط على أي رقم لترى كم يعني!</p>
+      <div class="num-grid" id="numGrid"></div>
+      <div class="num-word" id="numWord"></div>
+      <div class="num-display" id="numDisplay"></div>
+    </div>
+  </div>
+
+  <!-- ══ CARD 3: WHAT IS ADDITION ══ -->
+  <div class="card theme-add" id="c3">
+    <div class="card-head"><span class="icon">➕</span><h2>ما هو الجمع؟</h2></div>
+    <div class="card-body">
+      <p>الجمع يعني <strong>نضم شيئين معاً</strong> لنعرف كم عندنا!</p>
+      <div class="step-box add-step" id="s3_1">الخطوة 1: عندي <strong>تفاحتان</strong> 🍎🍎</div>
+      <div class="obj-row" id="s3_obA"></div>
+      <div class="step-box add-step" id="s3_2">الخطوة 2: جاءت <strong>3 تفاحات</strong> أكثر 🍎🍎🍎</div>
+      <div class="obj-row" id="s3_obB"></div>
+      <div class="step-box add-step" id="s3_3">الخطوة 3: اجمعهم معاً — كم عندي الآن؟</div>
+      <div class="obj-row" id="s3_obC"></div>
+      <div class="eq-box add-col" id="s3_eq" style="display:none;">2 <span style="color:#43A047">+</span> 3 <span style="color:#9c27b0">=</span> <span class="eq-ans">5</span> ✓</div>
+      <button class="replay-btn" onclick="playCard3()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 4: ADDITION EXAMPLE 1+2 ══ -->
+  <div class="card theme-add" id="c4">
+    <div class="card-head"><span class="icon">🍎</span><h2>مثال: 1 + 2 = ؟</h2></div>
+    <div class="card-body">
+      <div class="step-box add-step" id="s4_1">عندي <strong>تفاحة واحدة</strong> 🍎</div>
+      <div class="obj-row" id="s4_obA" style="font-size:3rem;"></div>
+      <div class="step-box add-step" id="s4_2">صديقي أعطاني <strong>تفاحتين</strong> أخريين 🍎🍎</div>
+      <div class="obj-row" id="s4_obB" style="font-size:3rem;"></div>
+      <div class="step-box add-step" id="s4_3">اجمعهم! عدّها كلها 👇</div>
+      <div class="obj-row" id="s4_obC" style="font-size:3rem;"></div>
+      <div class="eq-box add-col" id="s4_eq" style="display:none;">1 <span style="color:#43A047">+</span> 2 <span style="color:#9c27b0">=</span> <span class="eq-ans">3</span> 🎉</div>
+      <button class="replay-btn" onclick="playCard4()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 5: ADDITION EXAMPLE 3+4 ══ -->
+  <div class="card theme-add" id="c5">
+    <div class="card-head"><span class="icon">🧁</span><h2>مثال: 3 + 4 = ؟</h2></div>
+    <div class="card-body">
+      <p>لدينا <strong>مجموعتان</strong> من الكعكات — لنجمعهم!</p>
+      <div class="groups-row">
+        <div><div style="font-size:.85rem;font-weight:700;color:#1B5E20;margin-bottom:4px;">المجموعة الأولى</div>
+          <div class="group-box add-g" id="s5_gA"></div></div>
+        <div class="op-sign">➕</div>
+        <div><div style="font-size:.85rem;font-weight:700;color:#1B5E20;margin-bottom:4px;">المجموعة الثانية</div>
+          <div class="group-box add-g" id="s5_gB"></div></div>
+      </div>
+      <div class="step-box add-step" id="s5_step" style="margin-top:4px;">اضغط "اجمع!" لترى النتيجة</div>
+      <div class="obj-row" id="s5_merged" style="background:#f1fff1;border-radius:16px;padding:12px;min-height:60px;width:100%;"></div>
+      <div class="eq-box add-col" id="s5_eq" style="display:none;">3 <span style="color:#43A047">+</span> 4 <span style="color:#9c27b0">=</span> <span class="eq-ans">7</span> 🎉</div>
+      <button class="replay-btn" id="s5_btn" onclick="playCard5()">✨ اجمع!</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 6: NUMBER LINE ADDITION ══ -->
+  <div class="card theme-add" id="c6">
+    <div class="card-head"><span class="icon">📏</span><h2>خط الأعداد — الجمع</h2></div>
+    <div class="card-body">
+      <p>نبدأ من الرقم <strong style="color:#1565C0;">3</strong> ونقفز <strong style="color:#43A047;">4</strong> خطوات للأمام!</p>
+      <div class="eq-box add-col" style="font-size:2rem;">3 <span style="color:#43A047">+</span> 4 <span style="color:#9c27b0">=</span> <span id="nl6_ans" style="color:#ccc;">؟</span></div>
+      <div class="nl-outer"><div class="nl-inner" id="nl6_inner">
+        <div class="nl-frog" id="nl6_frog">🐸</div>
+        <div class="nl-track" id="nl6_track"></div>
+      </div></div>
+      <div class="nl-label" id="nl6_lbl">سيقفز الضفدع 4 خطوات →</div>
+      <button class="replay-btn" onclick="playCard6()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 7: WHAT IS SUBTRACTION ══ -->
+  <div class="card theme-sub" id="c7">
+    <div class="card-head"><span class="icon">➖</span><h2>ما هو الطرح؟</h2></div>
+    <div class="card-body">
+      <p>الطرح يعني <strong>نأخذ بعض الأشياء بعيداً</strong> لنعرف كم بقي!</p>
+      <div class="step-box sub-step" id="s7_1">الخطوة 1: عندي <strong>5 بالونات</strong> 🎈🎈🎈🎈🎈</div>
+      <div class="obj-row" id="s7_ob"></div>
+      <div class="step-box sub-step" id="s7_2">الخطوة 2: انفجرت <strong>بالونتان</strong> 💥💥</div>
+      <div class="step-box sub-step" id="s7_3">الخطوة 3: عدّ ما تبقّى!</div>
+      <div class="eq-box sub-col" id="s7_eq" style="display:none;">5 <span style="color:#E53935">−</span> 2 <span style="color:#9c27b0">=</span> <span class="eq-ans">3</span> ✓</div>
+      <button class="replay-btn" onclick="playCard7()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 8: SUBTRACTION EXAMPLE 4-1 ══ -->
+  <div class="card theme-sub" id="c8">
+    <div class="card-head"><span class="icon">⭐</span><h2>مثال: 4 − 1 = ؟</h2></div>
+    <div class="card-body">
+      <div class="step-box sub-step" id="s8_1">عندي <strong>4 نجوم</strong> ⭐⭐⭐⭐</div>
+      <div class="obj-row" id="s8_ob" style="font-size:3rem;"></div>
+      <div class="step-box sub-step" id="s8_2">سقطت نجمة <strong>واحدة</strong>! 💫</div>
+      <div class="step-box sub-step" id="s8_3">عدّ ما تبقّى 👇</div>
+      <div class="eq-box sub-col" id="s8_eq" style="display:none;">4 <span style="color:#E53935">−</span> 1 <span style="color:#9c27b0">=</span> <span class="eq-ans">3</span> 🎉</div>
+      <button class="replay-btn" onclick="playCard8()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 9: SUBTRACTION EXAMPLE 6-3 ══ -->
+  <div class="card theme-sub" id="c9">
+    <div class="card-head"><span class="icon">🍪</span><h2>مثال: 6 − 3 = ؟</h2></div>
+    <div class="card-body">
+      <p>عندي <strong>6 بسكويتات</strong> — أكلت 3 منها!</p>
+      <div class="obj-row" id="s9_ob" style="font-size:3rem;"></div>
+      <div class="step-box sub-step" id="s9_step">المأكول منها مطموس 🍪→ 💨</div>
+      <div class="step-box sub-step" id="s9_step2">عدّ الباقي!</div>
+      <div class="eq-box sub-col" id="s9_eq" style="display:none;">6 <span style="color:#E53935">−</span> 3 <span style="color:#9c27b0">=</span> <span class="eq-ans">3</span> 🎉</div>
+      <button class="replay-btn" onclick="playCard9()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 10: NUMBER LINE SUBTRACTION ══ -->
+  <div class="card theme-sub" id="c10">
+    <div class="card-head"><span class="icon">📏</span><h2>خط الأعداد — الطرح</h2></div>
+    <div class="card-body">
+      <p>نبدأ من الرقم <strong style="color:#BF360C;">8</strong> ونقفز <strong style="color:#E53935;">3</strong> خطوات للخلف!</p>
+      <div class="eq-box sub-col" style="font-size:2rem;">8 <span style="color:#E53935">−</span> 3 <span style="color:#9c27b0">=</span> <span id="nl10_ans" style="color:#ccc;">؟</span></div>
+      <div class="nl-outer"><div class="nl-inner" id="nl10_inner">
+        <div class="nl-frog" id="nl10_frog">🐸</div>
+        <div class="nl-track" id="nl10_track"></div>
+      </div></div>
+      <div class="nl-label" id="nl10_lbl">سيقفز الضفدع 3 خطوات للخلف ←</div>
+      <button class="replay-btn" onclick="playCard10()">↺ أعد العرض</button>
+    </div>
+  </div>
+
+  <!-- ══ CARD 11: SUMMARY ══ -->
+  <div class="card theme-done" id="c11">
+    <div class="card-head"><span class="icon">🏆</span><h2>أحسنت! تعلّمت كل شيء!</h2></div>
+    <div class="card-body">
+      <span style="font-size:4rem;">🌟</span>
+      <p>ماذا تعلّمت اليوم؟</p>
+      <div class="summary-item" style="animation-delay:.1s"><div class="badge" style="background:#E3F2FD;">🔢</div><span>الأرقام من <strong>0</strong> إلى <strong>9</strong></span></div>
+      <div class="summary-item" style="animation-delay:.25s"><div class="badge" style="background:#f1fff1;">➕</div><span>الجمع = نضم الأشياء لنعرف المجموع</span></div>
+      <div class="summary-item" style="animation-delay:.4s"><div class="badge" style="background:#fff3f0;">➖</div><span>الطرح = نأخذ بعيداً لنعرف الباقي</span></div>
+      <div class="summary-item" style="animation-delay:.55s"><div class="badge" style="background:#f1fff1;">📏</div><span>خط الأعداد يساعدنا على الجمع والطرح</span></div>
+      <button class="go-btn" onclick="window.open('math_playground.html','_self')">العب وتدرّب! 🎮</button>
+    </div>
+  </div>
+
+  <!-- ── NAV ── -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="prevBtn" onclick="go(-1)" disabled>← السابق</button>
+    <span class="card-num" id="cardNum">1 / 11</span>
+    <button class="nav-btn" id="nextBtn" onclick="go(1)">التالي →</button>
+  </div>
+</div>
+
+<script>
+/* ═══ CONSTANTS ═══ */
+const TOTAL=11;
+const NL_DOT=38, NL_CONN=16, NL_STEP=NL_DOT+NL_CONN; // 54px per step
+
+const AR_WORDS=['صفر','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة'];
+const NUM_EMOJI=['','🍎','🍊','🍋','⭐','🌟','🎈','🎀','🧁','🎊'];
+
+/* ═══ NAV ═══ */
+let cur=1;
+
+function go(d){
+  const next=cur+d;
+  if(next<1||next>TOTAL) return;
+  document.getElementById('c'+cur).classList.remove('active');
+  cur=next;
+  document.getElementById('c'+cur).classList.add('active');
+  updateUI();
+  onShow(cur);
+}
+
+function updateUI(){
+  document.getElementById('cardNum').textContent=cur+' / '+TOTAL;
+  document.getElementById('prevBtn').disabled=(cur===1);
+  document.getElementById('nextBtn').textContent=cur===TOTAL?'من البداية ↺':'التالي →';
+  document.getElementById('nextBtn').onclick=cur===TOTAL?()=>location.reload():()=>go(1);
+  // dots
+  const dots=document.getElementById('dots'); dots.innerHTML='';
+  for(let i=1;i<=TOTAL;i++){
+    const d=document.createElement('div'); d.className='dot';
+    if(i<cur) d.classList.add('done');
+    if(i===cur) d.classList.add('on');
+    dots.appendChild(d);
+  }
+}
+
+/* ═══ HELPERS ═══ */
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function show(id){const e=document.getElementById(id);if(e){e.classList.add('show');}}
+function hide(id){const e=document.getElementById(id);if(e){e.classList.remove('show');e.style.display='none';}}
+function showEq(id){const e=document.getElementById(id);if(e)e.style.display='';}
+
+function mkObjs(containerId, count, emoji, startDelay=0, dimFrom=count){
+  const el=document.getElementById(containerId); el.innerHTML='';
+  for(let i=0;i<count;i++){
+    const s=document.createElement('span');
+    s.className='obj'+(i>=dimFrom?' dim':'');
+    s.textContent=emoji;
+    s.style.animationDelay=(startDelay+i*80)+'ms';
+    el.appendChild(s);
+  }
+}
+
+function clearSteps(...ids){ids.forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('show');e.style.display='';}});}
+
+/* ═══ CARD 2: NUMBERS ═══ */
+function setupNumCard(){
+  const grid=document.getElementById('numGrid');
+  grid.innerHTML='';
+  for(let i=0;i<=9;i++){
+    const btn=document.createElement('div'); btn.className='num-tile';
+    btn.textContent=i;
+    btn.onclick=()=>showNum(i,btn);
+    grid.appendChild(btn);
+  }
+}
+
+function showNum(n, btn){
+  document.querySelectorAll('.num-tile').forEach(t=>t.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('numWord').textContent=n===0?'صفر — لا شيء! 🤷':AR_WORDS[n];
+  const disp=document.getElementById('numDisplay'); disp.innerHTML='';
+  if(n===0){disp.innerHTML='<span style="font-size:1.4rem;color:#aaa;">لا شيء هنا!</span>';return;}
+  const em=NUM_EMOJI[n]||'⭐';
+  for(let i=0;i<n;i++){
+    const s=document.createElement('span'); s.className='obj'; s.textContent=em;
+    s.style.animationDelay=(i*60)+'ms'; disp.appendChild(s);
+  }
+}
+
+/* ═══ CARD 3: ADDITION INTRO ═══ */
+async function playCard3(){
+  clearSteps('s3_1','s3_2','s3_3');
+  document.getElementById('s3_obA').innerHTML='';
+  document.getElementById('s3_obB').innerHTML='';
+  document.getElementById('s3_obC').innerHTML='';
+  document.getElementById('s3_eq').style.display='none';
+
+  await delay(300); show('s3_1');
+  await delay(600); mkObjs('s3_obA',2,'🍎');
+  await delay(1200); show('s3_2');
+  await delay(600); mkObjs('s3_obB',3,'🍎');
+  await delay(1200); show('s3_3');
+  await delay(800); mkObjs('s3_obC',5,'🍎');
+  await delay(900); showEq('s3_eq');
+}
+
+/* ═══ CARD 4: 1+2 ═══ */
+async function playCard4(){
+  clearSteps('s4_1','s4_2','s4_3');
+  ['s4_obA','s4_obB','s4_obC'].forEach(id=>document.getElementById(id).innerHTML='');
+  document.getElementById('s4_eq').style.display='none';
+
+  await delay(300); show('s4_1');
+  await delay(600); mkObjs('s4_obA',1,'🍎');
+  await delay(1300); show('s4_2');
+  await delay(600); mkObjs('s4_obB',2,'🍎');
+  await delay(1300); show('s4_3');
+  await delay(800); mkObjs('s4_obC',3,'🍎');
+  await delay(900); showEq('s4_eq');
+}
+
+/* ═══ CARD 5: 3+4 merge ═══ */
+function setupCard5(){
+  const gA=document.getElementById('s5_gA'), gB=document.getElementById('s5_gB');
+  gA.innerHTML=''; gB.innerHTML='';
+  document.getElementById('s5_merged').innerHTML='';
+  document.getElementById('s5_eq').style.display='none';
+  document.getElementById('s5_step').textContent='اضغط "اجمع!" لترى النتيجة';
+  document.getElementById('s5_step').classList.add('show');
+  document.getElementById('s5_btn').textContent='✨ اجمع!';
+  document.getElementById('s5_btn').onclick=()=>playCard5();
+  for(let i=0;i<3;i++){const s=document.createElement('span');s.className='obj';s.textContent='🧁';s.style.animationDelay=(i*70)+'ms';gA.appendChild(s);}
+  for(let i=0;i<4;i++){const s=document.createElement('span');s.className='obj';s.textContent='🧁';s.style.animationDelay=((3+i)*70)+'ms';gB.appendChild(s);}
+}
+
+async function playCard5(){
+  const btn=document.getElementById('s5_btn'); btn.disabled=true;
+  document.getElementById('s5_step').textContent='يا هلا! نجمعهم...';
+  await delay(400);
+  const merged=document.getElementById('s5_merged'); merged.innerHTML='';
+  for(let i=0;i<7;i++){
+    const s=document.createElement('span'); s.className='obj'; s.textContent='🧁';
+    s.style.animationDelay=(i*65)+'ms'; merged.appendChild(s);
+  }
+  document.getElementById('s5_gA').style.opacity='0.25';
+  document.getElementById('s5_gB').style.opacity='0.25';
+  await delay(600);
+  document.getElementById('s5_step').textContent='المجموع: 7 كعكات! 🧁×7';
+  await delay(700); showEq('s5_eq');
+  btn.textContent='↺ أعد'; btn.disabled=false;
+  btn.onclick=()=>{
+    document.getElementById('s5_gA').style.opacity='';
+    document.getElementById('s5_gB').style.opacity='';
+    setupCard5();
+  };
+}
+
+/* ═══ CARD 6 & 10: NUMBER LINE ═══ */
+function buildNL(trackId, innerRef, frogId, maxPos, startPos){
+  const track=document.getElementById(trackId); track.innerHTML='';
+  const frog=document.getElementById(frogId);
+  for(let i=0;i<=maxPos;i++){
+    const d=document.createElement('div'); d.className='nl-dot'; d.id=innerRef+'d'+i; d.textContent=i;
+    if(i===startPos) d.classList.add('start','cur');
+    track.appendChild(d);
+    if(i<maxPos){const c=document.createElement('div');c.className='nl-conn';c.id=innerRef+'c'+i;track.appendChild(c);}
+  }
+  frog.style.transition='none';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    frog.style.transition='left .5s cubic-bezier(.34,1.56,.64,1)';
+    placeFrog(frogId, innerRef, trackId, startPos);
+  }));
+}
+
+function placeFrog(frogId, innerRef, trackId, pos){
+  const dot=document.getElementById(innerRef+'d'+pos);
+  const frog=document.getElementById(frogId);
+  if(!dot||!frog) return;
+  frog.style.left=(dot.offsetLeft+dot.offsetWidth/2)+'px';
+  const wrap=dot.closest('.nl-outer');
+  if(wrap) wrap.scrollTo({left:dot.offsetLeft+dot.offsetWidth/2-wrap.clientWidth/2,behavior:'smooth'});
+}
+
+async function animateNL(innerRef, trackId, frogId, startPos, steps, dir, ansEl, lblEl, curClass){
+  let pos=startPos;
+  for(let i=0;i<steps;i++){
+    await delay(700);
+    // trail previous
+    const prev=document.getElementById(innerRef+'d'+pos);
+    if(prev){prev.classList.remove('cur','cur-sub','start');prev.classList.add('trail');}
+    if(dir>0){const c=document.getElementById(innerRef+'c'+pos);if(c)c.classList.add('trail');}
+    else{const c=document.getElementById(innerRef+'c'+(pos-1));if(c)c.classList.add('trail');}
+    pos+=dir;
+    const curr=document.getElementById(innerRef+'d'+pos);
+    if(curr){curr.classList.remove('trail','start');curr.classList.add(curClass);}
+    const frog=document.getElementById(frogId);
+    frog.classList.remove('hop'); void frog.offsetWidth; frog.classList.add('hop');
+    placeFrog(frogId,innerRef,trackId,pos);
+  }
+  await delay(600);
+  document.getElementById(ansEl).textContent=(startPos+steps*dir);
+  document.getElementById(ansEl).style.color='#6A0DAD';
+  document.getElementById(lblEl).textContent='وصل إلى '+(startPos+steps*dir)+'! ✓';
+}
+
+async function playCard6(){
+  buildNL('nl6_track','nl6','nl6_frog',10,3);
+  document.getElementById('nl6_ans').textContent='؟'; document.getElementById('nl6_ans').style.color='#ccc';
+  document.getElementById('nl6_lbl').textContent='سيقفز الضفدع 4 خطوات →';
+  await delay(800);
+  animateNL('nl6','nl6_track','nl6_frog',3,4,1,'nl6_ans','nl6_lbl','cur');
+}
+
+async function playCard10(){
+  buildNL('nl10_track','nl10','nl10_frog',9,8);
+  document.getElementById('nl10_ans').textContent='؟'; document.getElementById('nl10_ans').style.color='#ccc';
+  document.getElementById('nl10_lbl').textContent='سيقفز الضفدع 3 خطوات للخلف ←';
+  await delay(800);
+  animateNL('nl10','nl10_track','nl10_frog',8,3,-1,'nl10_ans','nl10_lbl','cur-sub');
+}
+
+/* ═══ CARD 7: SUB INTRO ═══ */
+async function playCard7(){
+  clearSteps('s7_1','s7_2','s7_3');
+  document.getElementById('s7_eq').style.display='none';
+  const ob=document.getElementById('s7_ob'); ob.innerHTML='';
+
+  await delay(300); show('s7_1');
+  await delay(600); mkObjs('s7_ob',5,'🎈');
+  await delay(1400); show('s7_2');
+  await delay(700);
+  const items=ob.querySelectorAll('.obj');
+  [items[3],items[4]].forEach(el=>{el.classList.add('removing');});
+  await delay(1000); show('s7_3');
+  await delay(800); showEq('s7_eq');
+}
+
+/* ═══ CARD 8: 4-1 ═══ */
+async function playCard8(){
+  clearSteps('s8_1','s8_2','s8_3');
+  document.getElementById('s8_ob').innerHTML='';
+  document.getElementById('s8_eq').style.display='none';
+
+  await delay(300); show('s8_1');
+  await delay(700); mkObjs('s8_ob',4,'⭐');
+  await delay(1400); show('s8_2');
+  await delay(700);
+  const items=document.getElementById('s8_ob').querySelectorAll('.obj');
+  items[3].classList.add('removing');
+  await delay(1000); show('s8_3');
+  await delay(800); showEq('s8_eq');
+}
+
+/* ═══ CARD 9: 6-3 ═══ */
+async function playCard9(){
+  clearSteps('s9_step','s9_step2');
+  document.getElementById('s9_eq').style.display='none';
+  mkObjs('s9_ob',6,'🍪');
+  await delay(600); show('s9_step');
+  await delay(1000);
+  const items=document.getElementById('s9_ob').querySelectorAll('.obj');
+  [items[3],items[4],items[5]].forEach((el,i)=>{setTimeout(()=>el.classList.add('dim'),i*150);});
+  await delay(1200); show('s9_step2');
+  await delay(800); showEq('s9_eq');
+}
+
+/* ═══ CONFETTI for final card ═══ */
+function confetti(){
+  const cols=['#FFD700','#FF6B35','#4ECDC4','#A855F7','#6BCB77','#FF6B6B'];
+  for(let i=0;i<50;i++){
+    const c=document.createElement('div'); c.className='cf';
+    c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};`+
+      `width:${8+Math.random()*9}px;height:${8+Math.random()*9}px;`+
+      `animation-delay:${Math.random()*.7}s;animation-duration:${1.5+Math.random()*1}s;`+
+      `border-radius:${Math.random()>.5?'50%':'3px'};`;
+    document.body.appendChild(c); setTimeout(()=>c.remove(),3000);
+  }
+}
+
+/* ═══ ON SHOW ═══ */
+function onShow(n){
+  if(n===2) setupNumCard();
+  if(n===3) playCard3();
+  if(n===4) playCard4();
+  if(n===5) setupCard5();
+  if(n===6) playCard6();
+  if(n===7) playCard7();
+  if(n===8) playCard8();
+  if(n===9) playCard9();
+  if(n===10) playCard10();
+  if(n===11) setTimeout(confetti,400);
+}
+
+/* ═══ INIT ═══ */
+updateUI();
+</script>
+</body>
+</html>

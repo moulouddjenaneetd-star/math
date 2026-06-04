@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ملعب الرياضيات</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --add:#1565C0; --sub:#BF360C; --ok:#43A047; --err:#E53935;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:'Cairo','Arial',sans-serif;
+  background:#0d0d2b; min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; direction:rtl;
+}
+
+/* ── خلفية ── */
+.bg-shape{position:fixed;border-radius:50%;opacity:.07;pointer-events:none;animation:drift 18s ease-in-out infinite alternate;}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.15)}}
+
+/* ── الشاشات ── */
+.screen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;z-index:1;transition:opacity .3s;}
+.screen.active{display:flex;}
+
+/* ══ شاشة البداية ══ */
+#splash{background:linear-gradient(145deg,#1a0533 0%,#0d0d2b 50%,#001838 100%);}
+.splash-mascot{font-size:6rem;animation:bob 2.5s ease-in-out infinite;margin-bottom:12px;filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-16px) rotate(3deg)}}
+.splash-title{font-size:2.8rem;font-weight:900;color:#fff;margin-bottom:6px;text-align:center;}
+.splash-sub{font-size:1rem;color:rgba(255,255,255,.6);margin-bottom:40px;text-align:center;}
+.cat-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:220px;padding:26px 18px;border-radius:28px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:900;font-size:1.45rem;color:#fff;
+  box-shadow:0 8px 0 rgba(0,0,0,.3),0 14px 40px rgba(0,0,0,.4);
+  transition:transform .14s,box-shadow .14s;margin:10px;
+}
+.cat-card:hover{transform:translateY(-5px);box-shadow:0 13px 0 rgba(0,0,0,.3),0 20px 50px rgba(0,0,0,.4);}
+.cat-card:active{transform:translateY(3px);box-shadow:0 4px 0 rgba(0,0,0,.3);}
+.cat-add{background:linear-gradient(135deg,#1565C0,#42A5F5);}
+.cat-sub{background:linear-gradient(135deg,#BF360C,#FF7043);}
+.cat-icon{font-size:2.8rem;margin-bottom:8px;}
+.cat-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;}
+
+/* ══ اختيار الوضع ══ */
+#modeSelect{background:linear-gradient(145deg,#1a0533 0%,#0d0d2b 50%,#001838 100%);padding:20px 16px;}
+.ms-title{font-size:2rem;font-weight:900;color:#fff;margin-bottom:4px;text-align:center;}
+.ms-sub{font-size:.95rem;color:rgba(255,255,255,.55);margin-bottom:24px;text-align:center;}
+.mode-grid{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:700px;}
+.mode-mini{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  width:190px;padding:22px 14px;border-radius:22px;border:none;cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:1.1rem;color:#fff;
+  box-shadow:0 6px 0 rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.35);
+  transition:transform .14s,box-shadow .14s;
+}
+.mode-mini:hover{transform:translateY(-4px);box-shadow:0 10px 0 rgba(0,0,0,.25),0 16px 40px rgba(0,0,0,.35);}
+.mode-mini:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.25);}
+.mode-mini .mi-icon{font-size:2.6rem;margin-bottom:8px;}
+.mode-mini .mi-desc{font-size:.8rem;opacity:.75;margin-top:4px;font-weight:700;}
+.back-ghost{
+  background:none;border:2px solid rgba(255,255,255,.3);border-radius:50px;
+  color:rgba(255,255,255,.7);font-family:inherit;font-size:1rem;font-weight:700;
+  padding:8px 22px;cursor:pointer;margin-top:22px;transition:all .15s;
+}
+.back-ghost:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+/* ══ ساحة اللعب ══ */
+#arena{background:#f0f4ff;flex-direction:column;justify-content:flex-start;overflow-y:auto;padding-bottom:20px;}
+.top-bar{width:100%;max-width:640px;display:flex;align-items:center;justify-content:space-between;padding:12px 20px 8px;flex-shrink:0;}
+.back-btn{background:none;border:none;cursor:pointer;font-size:1.2rem;font-family:inherit;font-weight:700;color:#777;padding:6px 12px;border-radius:10px;transition:background .15s;}
+.back-btn:hover{background:rgba(0,0,0,.08);}
+.stars-row{display:flex;gap:5px;}
+.star-slot{font-size:1.7rem;line-height:1;filter:grayscale(1) opacity(.3);transition:filter .3s;}
+.star-slot.lit{filter:none;animation:starPop .4s ease;}
+@keyframes starPop{0%{transform:scale(1)}50%{transform:scale(1.6)}100%{transform:scale(1)}}
+.q-count{font-size:.95rem;font-weight:700;color:#999;}
+.question-card{background:#fff;border-radius:22px;padding:16px 28px;margin:0 16px 12px;box-shadow:0 4px 20px rgba(0,0,0,.08);text-align:center;max-width:600px;width:calc(100% - 32px);flex-shrink:0;}
+.q-label{font-size:.95rem;font-weight:700;color:#bbb;margin-bottom:3px;}
+.q-text{font-size:2.8rem;font-weight:900;letter-spacing:2px;direction:ltr;}
+.qa{color:var(--add);} .qop-add{color:#43A047;} .qop-sub{color:#E53935;} .qeq{color:#9c27b0;} .qm{color:#ccc;}
+.stage{max-width:640px;width:100%;padding:0 16px;display:flex;flex-direction:column;align-items:center;flex:1;flex-shrink:0;}
+
+/* ── شريط التلميح ── */
+.hint-bar{font-size:1.05rem;font-weight:700;background:#fff3cd;border-radius:12px;padding:8px 16px;margin-bottom:10px;color:#7d5200;border:2px solid #ffe082;min-height:38px;display:flex;align-items:center;justify-content:center;text-align:center;width:100%;}
+.hint-bar.ready{background:#e8f5e9;color:#1b5e20;border-color:#a5d6a7;}
+
+/* ── لوحة الأرقام ── */
+.numpad-wrap{width:100%;max-width:640px;background:#fff;border-top:3px solid #e0e0e0;padding:12px 14px 14px;flex-shrink:0;}
+.numpad-label{font-size:.9rem;font-weight:700;color:#bbb;text-align:center;margin-bottom:7px;}
+.num-pad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;direction:ltr;}
+.num-btn{padding:13px 0;font-size:1.4rem;font-weight:900;font-family:inherit;background:#fafafa;border:2px solid #e0e0e0;border-radius:12px;cursor:pointer;box-shadow:0 4px 0 #d0d0d0;transition:all .14s;direction:ltr;}
+.num-btn:hover{background:#e3f2fd;border-color:#90caf9;transform:translateY(-2px);box-shadow:0 6px 0 #90caf9;}
+.num-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #ccc;}
+.num-btn.flash-ok{background:var(--ok);border-color:var(--ok);color:#fff;transform:scale(1.1);}
+.num-btn.flash-err{background:var(--err);border-color:var(--err);color:#fff;animation:shk .35s;}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ══════════════════════════════════
+   1. إطار العشرة
+══════════════════════════════════ */
+.tf-section{width:100%;display:flex;flex-direction:column;align-items:center;}
+.tf-pair{display:flex;gap:14px;justify-content:center;margin:0 0 12px;flex-wrap:wrap;direction:ltr;}
+.ten-frame{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);border:3px solid #222;border-radius:10px;overflow:hidden;background:#222;gap:2px;}
+.tf-cell{width:52px;height:52px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:1.9rem;cursor:default;user-select:none;transition:background .2s,transform .1s;}
+.tf-cell.empty{cursor:pointer;background:#fafafa;}
+.tf-cell.empty:hover,.tf-cell.droppable{background:#e8f5e9;}
+.tf-cell.over{background:#c8e6c9;transform:scale(.92);}
+.tf-cell.filled-red{background:#fff5f5;}
+.tf-cell.filled-green{background:#f1fff1;}
+.tf-cell.popped-in{animation:cellPop .42s cubic-bezier(.36,.07,.19,.97);}
+@keyframes cellPop{0%{transform:scale(0) rotate(-10deg)}45%{transform:scale(1.45) rotate(6deg)}70%{transform:scale(.85) rotate(-3deg)}88%{transform:scale(1.1) rotate(1deg)}100%{transform:scale(1) rotate(0)}}
+.supply-label{font-size:.95rem;font-weight:700;color:#555;margin:4px 0 8px;text-align:center;}
+.supply-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;background:#fff;border:2px dashed #a5d6a7;border-radius:18px;padding:14px 18px;min-height:66px;margin-bottom:6px;}
+.supply-apple{font-size:2.5rem;cursor:pointer;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2));transition:transform .15s;animation:bIn .4s ease both;user-select:none;}
+.supply-apple:hover{transform:scale(1.25) rotate(-8deg);}
+.supply-apple.used{opacity:.12;pointer-events:none;transition:opacity .25s;}
+.supply-apple.launching{animation:launchPop .26s ease forwards!important;pointer-events:none;}
+@keyframes launchPop{0%{transform:scale(1) translateY(0) rotate(0deg)}35%{transform:scale(1.6) translateY(-18px) rotate(-12deg)}100%{transform:scale(0) translateY(-30px) rotate(15deg);opacity:0}}
+@keyframes bIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.fly-apple{position:fixed;z-index:7000;pointer-events:none;font-size:2.6rem;transition:left .44s cubic-bezier(.4,0,.2,1),top .44s cubic-bezier(.4,0,.2,1),transform .44s ease,opacity .44s ease;}
+
+/* ══════════════════════════════════
+   2. خط الأعداد
+══════════════════════════════════ */
+/* constants kept in JS: NL_DOT=36, NL_CONN=18, NL_STEP=54 */
+.nl-outer{width:100%;display:flex;flex-direction:column;align-items:center;}
+.nl-wrap{width:100%;overflow-x:auto;background:linear-gradient(135deg,#e8f5e9,#e3f2fd);border-radius:20px;border:3px solid #a5d6a7;margin:8px 0;-webkit-overflow-scrolling:touch;}
+.nl-inner{position:relative;min-width:max-content;padding:52px 24px 18px;direction:ltr;}
+.nl-track{display:flex;align-items:center;}
+.nl-dot{
+  width:36px;height:36px;border-radius:50%;background:#fff;border:3px solid #bdbdbd;
+  display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:900;
+  flex-shrink:0;transition:background .35s,border-color .35s,transform .25s;
+}
+.nl-dot.nl-start  {background:#e3f2fd;border-color:#42A5F5;color:#1565C0;}
+.nl-dot.nl-trail  {background:#fff9c4;border-color:#FFD600;color:#7d5200;}
+.nl-dot.nl-current{background:#c8e6c9;border-color:#43A047;color:#1b5e20;transform:scale(1.25);}
+.nl-conn{width:18px;height:5px;background:#ddd;flex-shrink:0;border-radius:3px;transition:background .35s;}
+.nl-conn.nl-trail{background:#FFD600;}
+.nl-frog{
+  position:absolute;top:4px;font-size:2rem;
+  transform:translateX(-50%);
+  transition:left .45s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.2));
+}
+.nl-frog.hop{animation:frogHop .45s ease;}
+@keyframes frogHop{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-22px)}}
+.jump-btn{
+  font-size:1.5rem;font-weight:900;font-family:inherit;
+  padding:14px 36px;border:none;border-radius:50px;cursor:pointer;
+  background:linear-gradient(135deg,#43A047,#66BB6A);color:#fff;
+  box-shadow:0 6px 0 #2e7d32,0 10px 20px rgba(0,0,0,.2);
+  transition:transform .13s,box-shadow .13s;margin-top:8px;
+}
+.jump-btn:hover{transform:translateY(-3px);box-shadow:0 9px 0 #2e7d32,0 14px 28px rgba(0,0,0,.2);}
+.jump-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #2e7d32;}
+.jump-btn:disabled{opacity:.45;pointer-events:none;}
+.jump-btn.sub{background:linear-gradient(135deg,#E53935,#EF9A9A);}
+.jump-btn.sub{box-shadow:0 6px 0 #b71c1c,0 10px 20px rgba(0,0,0,.2);}
+.nl-progress{display:flex;gap:10px;justify-content:center;margin:10px 0;}
+.nl-pd{width:18px;height:18px;border-radius:50%;background:#e0e0e0;border:2px solid #ccc;transition:all .3s;}
+.nl-pd.lit{background:var(--ok);border-color:var(--ok);transform:scale(1.2);}
+.nl-pd.lit.sub{background:var(--err);border-color:var(--err);}
+
+/* ══════════════════════════════════
+   3. ادمج المجموعتين
+══════════════════════════════════ */
+.merge-section{width:100%;display:flex;flex-direction:column;align-items:center;}
+.merge-stage{
+  width:100%;display:flex;align-items:center;justify-content:space-around;
+  gap:10px;margin:8px 0;flex-wrap:wrap;
+}
+.merge-group{
+  background:#fff;border-radius:20px;border:3px dashed #9c27b0;
+  padding:14px 16px;min-width:130px;min-height:90px;
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  gap:8px;font-size:2.2rem;flex:1;max-width:210px;
+  box-shadow:0 4px 16px rgba(156,39,176,.12);
+  transition:max-width .5s ease, box-shadow .4s ease, border-color .3s ease, border-style .3s;
+}
+.merge-group.pulse-land{animation:groupPulse .22s ease;}
+@keyframes groupPulse{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+#mgAWrap{transition:flex .5s ease, width .5s ease;}
+.mg-label{font-size:.85rem;color:#9c27b0;font-weight:700;margin-bottom:4px;text-align:center;}
+.merge-plus{font-size:2.5rem;animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+.mg-item{display:inline-block;animation:bIn .4s ease both;}
+.merged-group{
+  background:linear-gradient(135deg,#ede9fe,#e3f2fd);
+  border:3px solid #9c27b0;border-radius:20px;
+  padding:18px 22px;display:none;flex-wrap:wrap;
+  justify-content:center;align-items:center;gap:8px;font-size:2.2rem;
+  min-width:240px;min-height:90px;width:100%;
+  box-shadow:0 8px 32px rgba(156,39,176,.25);
+}
+.merge-btn{
+  font-size:1.35rem;font-weight:900;font-family:inherit;
+  padding:14px 36px;border:none;border-radius:50px;cursor:pointer;
+  background:linear-gradient(135deg,#9c27b0,#ce93d8);color:#fff;
+  box-shadow:0 6px 0 #6a0080,0 10px 20px rgba(0,0,0,.2);
+  transition:transform .13s,box-shadow .13s;margin:8px 0;
+}
+.merge-btn:hover{transform:translateY(-3px);box-shadow:0 9px 0 #6a0080;}
+.merge-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #6a0080;}
+
+/* ══════════════════════════════════
+   4. فقّع البالونات
+══════════════════════════════════ */
+.balloon-board{
+  width:100%;background:linear-gradient(175deg,#4FC3F7 0%,#B3E5FC 55%,#E0F7FA 100%);
+  border-radius:22px;border:3px solid #81D4FA;
+  padding:20px 16px;min-height:220px;
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:center;align-items:center;
+  position:relative;overflow:hidden;margin-bottom:10px;
+}
+.balloon-board::before{content:'☁️';position:absolute;font-size:2.8rem;opacity:.55;top:10px;right:8%;}
+.balloon-board::after{content:'☁️';position:absolute;font-size:2rem;opacity:.5;top:16px;left:9%;}
+.bln-item{font-size:3rem;cursor:pointer;user-select:none;animation:blnBob 2s ease-in-out infinite;filter:drop-shadow(0 5px 8px rgba(0,0,0,.25));z-index:2;}
+.bln-item:hover{filter:drop-shadow(0 5px 8px rgba(0,0,0,.35)) brightness(1.1);}
+.bln-item.popped{animation:blnPop .42s ease forwards!important;pointer-events:none;}
+@keyframes blnBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+@keyframes blnPop{0%{transform:scale(1);opacity:1}35%{transform:scale(1.55);opacity:.75}70%{transform:scale(.6);opacity:.3}100%{transform:scale(0);opacity:0}}
+.pop-burst{position:fixed;pointer-events:none;z-index:8000;font-size:1.6rem;animation:burstAnim .55s ease forwards;}
+@keyframes burstAnim{from{transform:translate(-50%,-50%) scale(0)}50%{transform:translate(-50%,-50%) scale(1.4)}to{transform:translate(-50%,-50%) scale(0);opacity:0}}
+.sub-counter{font-size:1.2rem;font-weight:900;color:#BF360C;margin:4px 0 6px;text-align:center;}
+
+/* ══════════════════════════════════
+   5. كل الكعك
+══════════════════════════════════ */
+.eat-board{
+  width:100%;background:linear-gradient(135deg,#fff8e1,#ffe0b2);
+  border-radius:22px;border:3px solid #FFB74D;
+  padding:20px 16px;min-height:160px;
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;
+  margin-bottom:10px;
+}
+.cookie-item{font-size:3rem;cursor:pointer;user-select:none;animation:bIn .4s ease both;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2));transition:transform .15s;}
+.cookie-item:hover{transform:scale(1.15) rotate(-5deg);}
+.cookie-item:active{transform:scale(.9);}
+.cookie-item.eaten{animation:nomAnim .42s ease forwards!important;pointer-events:none;}
+@keyframes nomAnim{0%{transform:scale(1)}25%{transform:scale(1.4) rotate(10deg)}60%{transform:scale(.6) rotate(-15deg);opacity:.5}100%{transform:scale(0);opacity:0}}
+.eat-counter{font-size:1.2rem;font-weight:900;color:#E65100;margin:4px 0 6px;text-align:center;}
+
+/* ══ تغذية راجعة ══ */
+.feedback-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
+.feedback-overlay.show{display:flex;}
+.fb-badge{background:#fff;border-radius:28px;padding:26px 44px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fbPop .3s ease;}
+@keyframes fbPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+.fb-icon{font-size:4rem;margin-bottom:6px;}
+.fb-text{font-size:1.55rem;font-weight:900;}
+.fb-text.ok{color:var(--ok);} .fb-text.err{color:var(--err);}
+
+/* ══ شاشة الفوز ══ */
+#winScreen{background:linear-gradient(145deg,#1a0533 0%,#0d0d2b 50%,#001838 100%);flex-direction:column;text-align:center;}
+.win-title{font-size:2.6rem;font-weight:900;color:#fff;margin-bottom:4px;}
+.win-sub{font-size:1.1rem;color:rgba(255,255,255,.65);margin-bottom:18px;}
+.win-stars{font-size:3.5rem;letter-spacing:8px;margin:10px 0 22px;}
+.win-btn{padding:16px 40px;border:none;border-radius:50px;font-family:inherit;font-size:1.35rem;font-weight:900;color:#fff;cursor:pointer;margin:8px;box-shadow:0 6px 0 rgba(0,0,0,.25),0 12px 30px rgba(0,0,0,.3);transition:transform .14s,box-shadow .14s;}
+.win-btn:hover{transform:translateY(-4px);box-shadow:0 10px 0 rgba(0,0,0,.25),0 16px 40px rgba(0,0,0,.3);}
+.win-btn.play-again{background:linear-gradient(135deg,#43A047,#66BB6A);}
+.win-btn.home{background:linear-gradient(135deg,#5E35B1,#9575CD);}
+
+/* ── كونفيتي ── */
+.cf{position:fixed;top:-14px;z-index:9999;border-radius:3px;pointer-events:none;animation:cfFall 1.9s ease-in forwards;}
+@keyframes cfFall{to{transform:translateY(105vh) rotate(720deg);opacity:0}}
+
+@media(max-width:520px){
+  .tf-cell{width:44px;height:44px;font-size:1.6rem;}
+  .bln-item{font-size:2.5rem;} .cookie-item{font-size:2.5rem;}
+  .num-btn{font-size:1.2rem;padding:12px 0;}
+  .q-text{font-size:2.3rem;}
+  .mode-mini{width:160px;}
+  .nl-dot{width:32px;height:32px;font-size:.72rem;}
+  .nl-conn{width:14px;}
+}
+@media(max-height:700px){.balloon-board,.eat-board{min-height:140px;}.tf-cell{width:46px;height:46px;}}
+</style>
+</head>
+<body>
+
+<div class="bg-shape" style="width:500px;height:500px;background:#5c6bc0;top:-100px;right:-100px;"></div>
+<div class="bg-shape" style="width:350px;height:350px;background:#7b1fa2;bottom:-80px;left:-80px;animation-delay:3s;"></div>
+<div class="bg-shape" style="width:200px;height:200px;background:#0277bd;top:40%;left:5%;animation-delay:6s;"></div>
+
+<!-- ══ SPLASH ══ -->
+<div id="splash" class="screen active">
+  <div class="splash-mascot">🦉</div>
+  <div class="splash-title">ملعب الرياضيات</div>
+  <div class="splash-sub">اختر نوع اللعبة!</div>
+  <div class="cat-row">
+    <button class="cat-card cat-add" onclick="openModes('add')">
+      <div class="cat-icon">➕</div>
+      ملعب الجمع
+      <div style="font-size:.85rem;opacity:.75;margin-top:4px;">3 ألعاب ممتعة</div>
+    </button>
+    <button class="cat-card cat-sub" onclick="openModes('sub')">
+      <div class="cat-icon">➖</div>
+      مهمة الطرح
+      <div style="font-size:.85rem;opacity:.75;margin-top:4px;">3 ألعاب ممتعة</div>
+    </button>
+  </div>
+</div>
+
+<!-- ══ MODE SELECT ══ -->
+<div id="modeSelect" class="screen">
+  <div class="ms-title" id="msTitle">اختر اللعبة</div>
+  <div class="ms-sub">٣ ألعاب ممتعة تنتظرك!</div>
+  <div class="mode-grid" id="modeGrid"></div>
+  <button class="back-ghost" onclick="showScreen('splash')">← رجوع</button>
+</div>
+
+<!-- ══ ARENA ══ -->
+<div id="arena" class="screen">
+
+  <div class="top-bar">
+    <div class="q-count" id="qCount">1 / 5</div>
+    <div class="stars-row">
+      <span class="star-slot" id="s0">⭐</span><span class="star-slot" id="s1">⭐</span>
+      <span class="star-slot" id="s2">⭐</span><span class="star-slot" id="s3">⭐</span>
+      <span class="star-slot" id="s4">⭐</span>
+    </div>
+    <button class="back-btn" onclick="openModes(currentCat)">رجوع ←</button>
+  </div>
+
+  <div class="question-card">
+    <div class="q-label" id="qLabel">كم يساوي...</div>
+    <div class="q-text" id="qText"></div>
+  </div>
+
+  <div class="stage" id="stage">
+
+    <!-- 1: إطار العشرة -->
+    <div class="tf-section" id="tfSection" style="display:none;">
+      <div class="tf-pair" id="tfPair"></div>
+      <div class="hint-bar" id="tfHint"></div>
+      <div class="supply-label" id="supplyLabel"></div>
+      <div class="supply-row" id="supplyRow"></div>
+    </div>
+
+    <!-- 2: خط الأعداد -->
+    <div class="nl-outer" id="nlSection" style="display:none;">
+      <div class="hint-bar" id="nlHint"></div>
+      <div class="nl-wrap" id="nlWrap">
+        <div class="nl-inner" id="nlInner">
+          <div class="nl-frog" id="nlFrog">🐸</div>
+          <div class="nl-track" id="nlTrack"></div>
+        </div>
+      </div>
+      <div class="nl-progress" id="nlProgress"></div>
+      <button class="jump-btn" id="jumpBtn" onclick="doJump()">اقفز! 🦘</button>
+    </div>
+
+    <!-- 3: ادمج المجموعتين -->
+    <div class="merge-section" id="mergeSection" style="display:none;">
+      <div class="merge-stage" id="mergeStage">
+        <div id="mgAWrap">
+          <div class="mg-label">المجموعة الأولى</div>
+          <div class="merge-group" id="mgA"></div>
+        </div>
+        <div class="merge-plus" id="mgPlus">➕</div>
+        <div id="mgBWrap">
+          <div class="mg-label">المجموعة الثانية</div>
+          <div class="merge-group" id="mgB"></div>
+        </div>
+      </div>
+      <div class="merged-group" id="mergedGroup"></div>
+      <div class="hint-bar" id="mergeHint"></div>
+      <button class="merge-btn" id="mergeBtn" onclick="doMerge()">✨ ادمجهم!</button>
+    </div>
+
+    <!-- 4: فقّع البالونات -->
+    <div style="width:100%;display:none;" id="blnSection">
+      <div class="balloon-board" id="blnBoard"></div>
+      <div class="sub-counter" id="blnCounter"></div>
+      <div class="hint-bar" id="blnHint"></div>
+    </div>
+
+    <!-- 5: كل الكعك -->
+    <div style="width:100%;display:none;" id="eatSection">
+      <div class="eat-board" id="eatBoard"></div>
+      <div class="eat-counter" id="eatCounter"></div>
+      <div class="hint-bar" id="eatHint"></div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <div class="numpad-wrap">
+    <div class="numpad-label">اضغط على الجواب!</div>
+    <div class="num-pad" id="numPad"></div>
+  </div>
+
+</div><!-- /arena -->
+
+<!-- ══ WIN ══ -->
+<div id="winScreen" class="screen">
+  <div style="font-size:5rem;margin-bottom:8px;">🎉</div>
+  <div class="win-title">أنجزتها!</div>
+  <div class="win-sub">أجبت على جميع الأسئلة الخمسة! 🌟</div>
+  <div class="win-stars">⭐⭐⭐⭐⭐</div>
+  <div>
+    <button class="win-btn play-again" onclick="replayMode()">العب مجدداً! 🔄</button>
+    <button class="win-btn home" onclick="showScreen('splash')">الرئيسية 🏠</button>
+  </div>
+</div>
+
+<!-- FEEDBACK -->
+<div class="feedback-overlay" id="fbOverlay">
+  <div class="fb-badge">
+    <div class="fb-icon" id="fbIcon">🎉</div>
+    <div class="fb-text" id="fbText"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════
+   AUDIO
+══════════════════════════════════════ */
+let audioCtx=null;
+function getCtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playTone(freq,type='sine',dur=.12,vol=.35,sf=null){
+  try{const c=getCtx(),o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);o.type=type;o.frequency.value=sf||freq;
+    if(sf)o.frequency.exponentialRampToValueAtTime(freq,c.currentTime+dur);
+    g.gain.setValueAtTime(vol,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+    o.start();o.stop(c.currentTime+dur);}catch(e){}
+}
+function sfxPop(){playTone(220,'sawtooth',.14,.4,900);}
+function sfxPlace(){playTone(660,'sine',.09,.25);}
+function sfxJump(){playTone(440,'sine',.08,.2);}
+function sfxMerge(){[330,440,550].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',.15,.2),i*60));}
+function sfxNom(){playTone(300,'sawtooth',.12,.35,600);}
+function sfxCorrect(){[523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',.18,.28),i*90));}
+function sfxWrong(){playTone(180,'sawtooth',.25,.3);}
+function sfxStar(){playTone(880,'sine',.15,.3);setTimeout(()=>playTone(1046,'sine',.18,.25),120);}
+function sfxWin(){[523,587,659,784,880,1046].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',.22,.3),i*120));}
+
+/* ══════════════════════════════════════
+   STATE & CONFIG
+══════════════════════════════════════ */
+let currentCat='add'; // 'add'|'sub'
+let currentMode='';   // 'add-frame'|'add-line'|'add-merge'|'sub-balloon'|'sub-line'|'sub-eat'
+let qA=0,qB=0,correctAns=0,stars=0,qIdx=0;
+let interactDone=false,placed=0,locked=false;
+
+const toAr=n=>String(n); // keep Western numerals everywhere
+
+const MODES={
+  add:{
+    title:'ملعب الجمع',
+    list:[
+      {id:'add-frame', icon:'🍎', label:'إطار العشرة',      desc:'ضع التفاحات في الإطار!',    color:'linear-gradient(135deg,#1565C0,#42A5F5)'},
+      {id:'add-line',  icon:'🐸', label:'خط الأعداد',       desc:'اقفز بالضفدع للأمام!',       color:'linear-gradient(135deg,#2E7D32,#66BB6A)'},
+      {id:'add-merge', icon:'⭐', label:'ادمج المجموعتين', desc:'ادمج النجوم وعدّها!',         color:'linear-gradient(135deg,#6A0080,#CE93D8)'},
+    ]
+  },
+  sub:{
+    title:'مهمة الطرح',
+    list:[
+      {id:'sub-balloon',icon:'🎈',label:'فقّع البالونات', desc:'فقّع البالونات بالضغط!',       color:'linear-gradient(135deg,#BF360C,#FF7043)'},
+      {id:'sub-line',   icon:'🐸',label:'خط الأعداد',     desc:'اقفز بالضفدع للخلف!',          color:'linear-gradient(135deg,#1A237E,#5C6BC0)'},
+      {id:'sub-eat',    icon:'🍪',label:'كل الكعك!',      desc:'كل الكعك وعدّ الباقي!',        color:'linear-gradient(135deg,#E65100,#FFA726)'},
+    ]
+  }
+};
+
+const BALLOON_SET=['🎈','🎀','🎊','🪅','🎏','🎆','🎇','🪄','🎐'];
+const BALLOON_COLS=['#FF6B6B','#FF9800','#FFEB3B','#4CAF50','#2196F3','#9C27B0','#FF4081','#00BCD4','#795548'];
+const MERGE_EMOJIS=['⭐','💛','💜','💚','💙','🌸','🔶','🔷'];
+const COOKIE_EMOJIS=['🍪','🍩','🧁','🍰','🎂','🍫','🍬','🍭'];
+
+/* ══════════════════════════════════════
+   SCREENS
+══════════════════════════════════════ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.opacity='0';});
+  const el=document.getElementById(id);
+  el.classList.add('active');
+  requestAnimationFrame(()=>{el.style.opacity='1';el.style.transition='opacity .3s';});
+}
+
+function openModes(cat){
+  currentCat=cat;
+  const cfg=MODES[cat];
+  document.getElementById('msTitle').textContent=cfg.title;
+  const grid=document.getElementById('modeGrid'); grid.innerHTML='';
+  cfg.list.forEach(m=>{
+    const btn=document.createElement('button'); btn.className='mode-mini';
+    btn.style.background=m.color;
+    btn.innerHTML=`<div class="mi-icon">${m.icon}</div>${m.label}<div class="mi-desc">${m.desc}</div>`;
+    btn.onclick=()=>startGame(m.id);
+    grid.appendChild(btn);
+  });
+  showScreen('modeSelect');
+}
+
+/* ══════════════════════════════════════
+   MATH
+══════════════════════════════════════ */
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+function genQ(){
+  if(currentMode==='add-frame'){qA=rand(0,9);qB=rand(0,9);correctAns=qA+qB;}
+  else if(currentMode==='add-line') {qA=rand(0,6);qB=rand(1,4);correctAns=qA+qB;}  // line 0–10
+  else if(currentMode==='add-merge'){qA=rand(1,7);qB=rand(1,7-qA+1);qB=Math.max(1,Math.min(qB,9-qA));correctAns=qA+qB;}
+  else if(currentMode==='sub-balloon'||currentMode==='sub-eat'){qA=rand(1,9);qB=rand(1,qA);correctAns=qA-qB;}
+  else if(currentMode==='sub-line') {qA=rand(2,9);qB=rand(1,qA);correctAns=qA-qB;}
+}
+
+/* ══════════════════════════════════════
+   START GAME
+══════════════════════════════════════ */
+function startGame(mode){
+  currentMode=mode; stars=0; qIdx=0; updateStars();
+  showScreen('arena');
+  const isAdd=mode.startsWith('add');
+  document.getElementById('arena').style.background=isAdd?'#f0f4ff':'#fff5f0';
+  nextQuestion();
+}
+function replayMode(){startGame(currentMode);}
+
+function nextQuestion(){
+  locked=false; placed=0; interactDone=false;
+  genQ();
+  if(qB===0) interactDone=true;
+
+  document.getElementById('qCount').textContent=(qIdx+1)+' / 5';
+  const isAdd=currentMode.startsWith('add');
+  const op=isAdd?'+':'−';
+  const opCls=isAdd?'qop-add':'qop-sub';
+  document.getElementById('qLabel').textContent='كم يساوي...';
+  document.getElementById('qText').innerHTML=
+    `<span class="qa">${qA}</span><span class="${opCls}"> ${op} </span><span class="qa">${qB}</span><span class="qeq"> = </span><span class="qm">?</span>`;
+
+  // show correct section
+  ['tfSection','nlSection','mergeSection','blnSection','eatSection'].forEach(id=>{
+    document.getElementById(id).style.display='none';
+  });
+  const sectionMap={
+    'add-frame':'tfSection','add-line':'nlSection','add-merge':'mergeSection',
+    'sub-balloon':'blnSection','sub-line':'nlSection','sub-eat':'eatSection'
+  };
+  const sec=document.getElementById(sectionMap[currentMode]);
+  sec.style.display=['add-frame','add-line','add-merge'].includes(currentMode)?'flex':'block';
+  if(currentMode==='nlSection'||currentMode==='add-line'||currentMode==='sub-line') sec.style.display='flex';
+
+  // build the right game
+  ({
+    'add-frame':buildTenFrame,'add-line':buildNLAdd,'add-merge':buildMerge,
+    'sub-balloon':buildBalloons,'sub-line':buildNLSub,'sub-eat':buildEat
+  }[currentMode])();
+
+  buildNumPad();
+  updateHint();
+}
+
+/* ══════════════════════════════════════
+   1. إطار العشرة
+══════════════════════════════════════ */
+function buildTenFrame(){
+  const pair=document.getElementById('tfPair'); pair.innerHTML='';
+  for(let fr=0;fr<2;fr++){
+    const frame=document.createElement('div'); frame.className='ten-frame';
+    for(let i=0;i<10;i++){
+      const idx=fr*10+i;
+      const cell=document.createElement('div'); cell.className='tf-cell'; cell.dataset.idx=idx;
+      if(idx<qA){cell.classList.add('filled-red');cell.textContent='🍎';}
+      else{cell.classList.add('empty');cell.addEventListener('click',()=>clickCell(cell));}
+      frame.appendChild(cell);
+    }
+    pair.appendChild(frame);
+  }
+  const row=document.getElementById('supplyRow'); row.innerHTML='';
+  if(qB===0){document.getElementById('supplyLabel').textContent='لا توجد تفاحات للإضافة — أوجد الجواب!';}
+  else{
+    document.getElementById('supplyLabel').textContent=`اسحب أو انقر على ${toAr(qB)} تفاحة خضراء وضعها في الإطار!`;
+    for(let i=0;i<qB;i++){
+      const a=document.createElement('div'); a.className='supply-apple'; a.textContent='🍏';
+      a.style.animationDelay=(i*.08)+'s';
+      a.addEventListener('click',()=>clickSupplyApple(a));
+      a.addEventListener('pointerdown',e=>startDrag(e,a));
+      row.appendChild(a);
+    }
+  }
+  document.getElementById('tfHint').textContent='';
+}
+
+function clickSupplyApple(el){
+  if(el.classList.contains('used')||interactDone||locked) return;
+  el.classList.add('used','launching');
+  const next=document.querySelector('#tfPair .tf-cell.empty');
+  if(!next){el.classList.remove('used','launching');return;}
+  flyAppleToCell(el,next);
+}
+function clickCell(cell){
+  if(interactDone||locked||!cell.classList.contains('empty')) return;
+  const src=document.querySelector('#supplyRow .supply-apple:not(.used)');
+  if(!src&&qB>0) return;
+  if(src) src.classList.add('used','launching');
+  fillCell(cell);
+}
+function flyAppleToCell(src,target){
+  const sr=src.getBoundingClientRect(),tr=target.getBoundingClientRect();
+  const clone=document.createElement('div'); clone.className='fly-apple'; clone.textContent='🍏';
+  clone.style.left=(sr.left+sr.width/2-18)+'px'; clone.style.top=(sr.top+sr.height/2-18)+'px';
+  clone.style.transform='scale(1.5) rotate(-10deg)'; clone.style.filter='drop-shadow(0 6px 12px rgba(0,0,0,.35))';
+  document.body.appendChild(clone);
+  setTimeout(()=>{
+    clone.style.left=(tr.left+tr.width/2-18)+'px'; clone.style.top=(tr.top+tr.height/2-18)+'px';
+    clone.style.transform='scale(0.5) rotate(15deg)'; clone.style.opacity='0';
+  },30);
+  setTimeout(()=>{clone.remove();fillCell(target);},480);
+}
+function fillCell(cell){
+  cell.classList.remove('empty'); cell.classList.add('filled-green','popped-in'); cell.textContent='🍏';
+  sfxPlace(); placed++;
+  if(placed>=qB){interactDone=true;updateHint();}
+}
+
+// drag
+let dragging=false,dragGhost=null,dragSource=null;
+function startDrag(e,src){
+  if(src.classList.contains('used')||interactDone) return;
+  e.preventDefault(); dragging=true; dragSource=src;
+  dragGhost=document.createElement('div');
+  dragGhost.style.cssText='position:fixed;z-index:6000;pointer-events:none;font-size:2.8rem;';
+  dragGhost.textContent='🍏'; document.body.appendChild(dragGhost);
+  moveDrag(e); highlightEmpties(true);
+}
+function moveDrag(e){
+  if(!dragging||!dragGhost) return;
+  const x=e.touches?e.touches[0].clientX:e.clientX, y=e.touches?e.touches[0].clientY:e.clientY;
+  dragGhost.style.left=(x-22)+'px'; dragGhost.style.top=(y-22)+'px';
+  document.querySelectorAll('#tfPair .tf-cell.empty').forEach(c=>{
+    const r=c.getBoundingClientRect();
+    c.classList.toggle('over',x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom);
+  });
+}
+function endDrag(e){
+  if(!dragging) return; dragging=false;
+  if(dragGhost){dragGhost.remove();dragGhost=null;} highlightEmpties(false);
+  const x=e.changedTouches?e.changedTouches[0].clientX:e.clientX, y=e.changedTouches?e.changedTouches[0].clientY:e.clientY;
+  const target=Array.from(document.querySelectorAll('#tfPair .tf-cell.empty')).find(c=>{
+    const r=c.getBoundingClientRect(); return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom;
+  });
+  if(target&&dragSource&&!dragSource.classList.contains('used')){dragSource.classList.add('used','launching');fillCell(target);}
+  dragSource=null;
+}
+function highlightEmpties(on){document.querySelectorAll('#tfPair .tf-cell.empty').forEach(c=>c.classList.toggle('droppable',on));}
+document.addEventListener('pointermove',moveDrag);
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('touchmove',e=>{if(dragging)e.preventDefault();},{passive:false});
+document.addEventListener('touchend',endDrag);
+
+/* ══════════════════════════════════════
+   2. خط الأعداد
+══════════════════════════════════════ */
+let nlPos=0, nlJumps=0, nlDir=1, nlMax=10;
+
+/* Returns the frog's left value (px, relative to nl-inner) for a given position.
+   Uses the actual rendered dot offsetLeft so padding / direction don't matter. */
+function getFrogLeft(pos){
+  const dot=document.getElementById('nld'+pos);
+  if(!dot) return 0;
+  return dot.offsetLeft + dot.offsetWidth/2;
+}
+
+function scrollNLTo(pos){
+  const dot=document.getElementById('nld'+pos);
+  const wrap=document.getElementById('nlWrap');
+  if(!dot||!wrap) return;
+  // center the dot in the visible scroll area
+  wrap.scrollTo({left: dot.offsetLeft + dot.offsetWidth/2 - wrap.clientWidth/2, behavior:'smooth'});
+}
+
+function placeFrog(pos, animate){
+  const frog=document.getElementById('nlFrog');
+  const x=getFrogLeft(pos);
+  if(!animate){
+    frog.style.transition='none';
+    frog.style.left=x+'px';
+    // restore transition after paint
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      frog.style.transition='left .45s cubic-bezier(.34,1.56,.64,1)';
+    }));
+  } else {
+    frog.style.left=x+'px';
+    frog.classList.remove('hop'); void frog.offsetWidth; frog.classList.add('hop');
+  }
+}
+
+function buildNL(startPos, maxPos, dir){
+  nlPos=startPos; nlJumps=0; nlDir=dir; nlMax=maxPos;
+  const track=document.getElementById('nlTrack'); track.innerHTML='';
+  for(let i=0;i<=maxPos;i++){
+    const dot=document.createElement('div'); dot.className='nl-dot'; dot.id='nld'+i; dot.textContent=i;
+    if(i===startPos) dot.classList.add('nl-start','nl-current');
+    track.appendChild(dot);
+    if(i<maxPos){const c=document.createElement('div');c.className='nl-conn';c.id='nlc'+i;track.appendChild(c);}
+  }
+
+  // jump button
+  const btn=document.getElementById('jumpBtn');
+  btn.disabled=false; btn.className=dir<0?'jump-btn sub':'jump-btn';
+  btn.textContent=dir>0?'اقفز للأمام! 🦘':'اقفز للخلف! 🦘';
+
+  // progress dots
+  const prog=document.getElementById('nlProgress'); prog.innerHTML='';
+  for(let i=0;i<qB;i++){const d=document.createElement('div');d.className='nl-pd'+(dir<0?' sub':'');d.id='nlpd'+i;prog.appendChild(d);}
+
+  // place frog after the DOM has painted so offsetLeft is accurate
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    placeFrog(startPos, false);
+    scrollNLTo(startPos);
+  }));
+}
+function buildNLAdd(){buildNL(qA,10,1);}
+function buildNLSub(){buildNL(qA,9,-1);}
+
+function doJump(){
+  if(interactDone||locked) return;
+  if(nlJumps>=qB) return;
+
+  // colour previous dot as trail
+  const prev=document.getElementById('nld'+nlPos);
+  if(prev){prev.classList.remove('nl-start','nl-current');prev.classList.add('nl-trail');}
+  if(nlDir>0){
+    const conn=document.getElementById('nlc'+nlPos); if(conn) conn.classList.add('nl-trail');
+  } else {
+    const conn=document.getElementById('nlc'+(nlPos-1)); if(conn) conn.classList.add('nl-trail');
+  }
+
+  nlPos+=nlDir;
+
+  // mark new dot as current
+  const curr=document.getElementById('nld'+nlPos);
+  if(curr){curr.classList.remove('nl-trail','nl-start');curr.classList.add('nl-current');}
+
+  // move frog to new dot using real DOM position
+  placeFrog(nlPos, true);
+  scrollNLTo(nlPos);
+  sfxJump();
+
+  // fill progress dot
+  const pd=document.getElementById('nlpd'+nlJumps); if(pd) pd.classList.add('lit');
+  nlJumps++;
+
+  if(nlJumps>=qB){
+    document.getElementById('jumpBtn').disabled=true;
+    interactDone=true; updateHint();
+  }
+}
+
+/* ══════════════════════════════════════
+   3. ادمج المجموعتين
+══════════════════════════════════════ */
+let mergeEmoji='⭐';
+
+function resetMergeEl(id){
+  const el=document.getElementById(id); if(!el) return;
+  el.getAnimations().forEach(a=>a.cancel());
+  ['transform','opacity','visibility','display','transition',
+   'maxWidth','flex','width','boxShadow','borderStyle'].forEach(p=>el.style[p]='');
+}
+
+function buildMerge(){
+  mergeEmoji=MERGE_EMOJIS[rand(0,MERGE_EMOJIS.length-1)];
+  ['mgA','mgB','mgBWrap','mgAWrap','mergedGroup'].forEach(resetMergeEl);
+
+  const mgA=document.getElementById('mgA'), mgB=document.getElementById('mgB');
+  mgA.innerHTML=''; mgB.innerHTML='';
+  document.getElementById('mergedGroup').style.display='none';
+  document.getElementById('mergeStage').style.display='flex';
+  document.getElementById('mgPlus').style.display='block';
+  document.getElementById('mergeBtn').style.display='inline-block';
+
+  for(let i=0;i<qA;i++){
+    const s=document.createElement('span'); s.className='mg-item'; s.textContent=mergeEmoji;
+    s.style.animationDelay=(i*.07)+'s'; mgA.appendChild(s);
+  }
+  for(let i=0;i<qB;i++){
+    const s=document.createElement('span'); s.className='mg-item'; s.textContent=mergeEmoji;
+    s.style.animationDelay=((qA+i)*.07)+'s'; mgB.appendChild(s);
+  }
+  const h=document.getElementById('mergeHint');
+  h.textContent=qB>0?`اضغط "ادمجهم!" لتجمع المجموعتين!`:'لا توجد مجموعة ثانية — أوجد الجواب!';
+  h.className='hint-bar';
+}
+
+function mergeSparkle(x,y){
+  ['✨','💫','⭐'].forEach((ch,i)=>{
+    const s=document.createElement('div'); s.className='pop-burst'; s.textContent=ch;
+    s.style.left=x+'px'; s.style.top=y+'px'; s.style.animationDelay=(i*.07)+'s';
+    document.body.appendChild(s); setTimeout(()=>s.remove(),700);
+  });
+}
+
+async function doMerge(){
+  document.getElementById('mergeBtn').style.display='none';
+
+  const mgA    =document.getElementById('mgA');
+  const mgBWrap=document.getElementById('mgBWrap');
+  const mgAWrap=document.getElementById('mgAWrap');
+  const plus   =document.getElementById('mgPlus');
+  const bItems =Array.from(document.getElementById('mgB').querySelectorAll('.mg-item'));
+
+  if(bItems.length===0){ finishMerge(); return; }
+
+  plus.animate([{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(0.3)'}],
+    {duration:200,fill:'forwards'});
+
+  /* Snapshot B before any animation — used for slide distance only */
+  const bWrapRect=mgBWrap.getBoundingClientRect();
+  const STAGGER=105, FLY_DUR=430;
+
+  /* ── Phase 1: each B item arcs over and lands as a REAL element inside A ── */
+  const flyPromises=bItems.map((item,i)=>new Promise(resolve=>{
+    setTimeout(()=>{
+      /* Live position read — early items from B's original spot,
+         later ones from wherever B currently sits during its slide */
+      const sr=item.getBoundingClientRect();
+      const ar=mgA.getBoundingClientRect();
+      const sx=sr.left+sr.width/2, sy=sr.top+sr.height/2;
+      const ex=ar.left+ar.width/2 +(Math.random()-.5)*Math.min(ar.width*.45,34);
+      const ey=ar.top +ar.height/2+(Math.random()-.5)*Math.min(ar.height*.4,14);
+      const mx=(sx+ex)/2;
+      const my=Math.min(sy,ey)-65-Math.abs(ex-sx)*.2;
+
+      item.style.visibility='hidden';
+
+      const clone=document.createElement('div');
+      clone.textContent=mergeEmoji;
+      clone.style.cssText=`position:fixed;left:${sx}px;top:${sy}px;font-size:2.3rem;`+
+        `z-index:7000;pointer-events:none;transform:translate(-50%,-50%);`+
+        `filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));`;
+      document.body.appendChild(clone);
+
+      clone.animate([
+        {left:sx+'px',top:sy+'px',transform:'translate(-50%,-50%) scale(1.3) rotate(-7deg)',opacity:1},
+        {left:mx+'px',top:my+'px',transform:'translate(-50%,-50%) scale(1.6) rotate(-25deg)',opacity:1,offset:.42},
+        {left:ex+'px',top:ey+'px',transform:'translate(-50%,-50%) scale(0.2) rotate(12deg)',opacity:0}
+      ],{duration:FLY_DUR,easing:'ease-in-out',fill:'forwards'});
+
+      setTimeout(()=>{
+        clone.remove();
+        /* ── Land: a real item pops into A — bIn CSS animation fires automatically ── */
+        const landed=document.createElement('span');
+        landed.className='mg-item'; landed.textContent=mergeEmoji;
+        mgA.appendChild(landed);
+        mgA.classList.remove('pulse-land'); void mgA.offsetWidth; mgA.classList.add('pulse-land');
+        mergeSparkle(ex,ey); sfxPlace();
+        resolve();
+      },FLY_DUR);
+    },i*STAGGER);
+  }));
+
+  /* ── Phase 2: empty B basket slides toward A right after first item leaves ── */
+  setTimeout(()=>{
+    const aRect=mgA.getBoundingClientRect();
+    const slideX=aRect.left-bWrapRect.left;
+    mgBWrap.animate([
+      {transform:'translateX(0) scale(1)',      opacity:1},
+      {transform:`translateX(${slideX*.55}px) scale(0.88)`,opacity:.5,offset:.5},
+      {transform:`translateX(${slideX}px) scale(0)`,        opacity:0}
+    ],{duration:460,easing:'cubic-bezier(0.55,0,1,1)',fill:'forwards'});
+  }, Math.min(bItems.length-1,1)*STAGGER+55);
+
+  await Promise.all(flyPromises);
+  await new Promise(r=>setTimeout(r,130));
+  finishMerge();
+}
+
+/* A already holds every item live — just hide B and expand A in place. */
+function finishMerge(){
+  sfxMerge();
+  const mgBWrap=document.getElementById('mgBWrap');
+  mgBWrap.getAnimations().forEach(a=>a.cancel());
+  mgBWrap.style.display='none';
+  document.getElementById('mgPlus').style.display='none';
+
+  /* A stays exactly where it is — just celebrate with a glow + pulse */
+  const mgA=document.getElementById('mgA');
+  mgA.style.transition='box-shadow .38s ease, border-color .28s';
+  mgA.style.boxShadow='0 8px 32px rgba(156,39,176,.28)';
+  mgA.style.borderStyle='solid';
+  mgA.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],
+    {duration:300,easing:'ease-out'});
+
+  interactDone=true; updateHint();
+}
+
+/* ══════════════════════════════════════
+   4. فقّع البالونات
+══════════════════════════════════════ */
+function buildBalloons(){
+  const board=document.getElementById('blnBoard'); board.innerHTML='';
+  for(let i=0;i<qA;i++){
+    const b=document.createElement('div'); b.className='bln-item';
+    b.textContent=BALLOON_SET[i%BALLOON_SET.length];
+    b.style.color=BALLOON_COLS[i%BALLOON_COLS.length];
+    b.style.animationDelay=(Math.random()*1.8)+'s';
+    b.style.animationDuration=(1.5+Math.random()*1.2)+'s';
+    b.addEventListener('click',()=>popBalloon(b));
+    board.appendChild(b);
+  }
+  document.getElementById('blnCounter').textContent=
+    qB>0?`فقّع ${toAr(qB)} بالونة! 🏹`:'عدّ البالونات — اضغط على الجواب!';
+}
+function popBalloon(bln){
+  if(bln.classList.contains('popped')||interactDone||locked) return;
+  sfxPop(); bln.classList.add('popped');
+  const r=bln.getBoundingClientRect();
+  ['💥','✨','🌟'].forEach((ch,i)=>{
+    const b=document.createElement('div'); b.className='pop-burst'; b.textContent=ch;
+    b.style.left=r.left+r.width/2+'px'; b.style.top=r.top+r.height/2+'px';
+    b.style.animationDelay=(i*.06)+'s';
+    document.body.appendChild(b); setTimeout(()=>b.remove(),600);
+  });
+  placed++;
+  const rem=qA-placed, left=qB-placed;
+  document.getElementById('blnCounter').textContent=
+    placed<qB?`فقّع ${toAr(left)} بالونة أكثر!`:`تبقّى ${toAr(rem)} بالون — اضغط على الجواب!`;
+  if(placed>=qB){interactDone=true;updateHint();}
+}
+
+/* ══════════════════════════════════════
+   5. كل الكعك
+══════════════════════════════════════ */
+let cookieEmoji='🍪';
+function buildEat(){
+  cookieEmoji=COOKIE_EMOJIS[rand(0,COOKIE_EMOJIS.length-1)];
+  const board=document.getElementById('eatBoard'); board.innerHTML='';
+  for(let i=0;i<qA;i++){
+    const c=document.createElement('div'); c.className='cookie-item'; c.textContent=cookieEmoji;
+    c.style.animationDelay=(i*.07)+'s';
+    c.addEventListener('click',()=>eatCookie(c));
+    board.appendChild(c);
+  }
+  document.getElementById('eatCounter').textContent=
+    qB>0?`كل ${toAr(qB)} ${cookieEmoji} منها!`:'عدّ الكعك — اضغط على الجواب!';
+}
+function eatCookie(c){
+  if(c.classList.contains('eaten')||interactDone||locked) return;
+  sfxNom(); c.classList.add('eaten');
+  const r=c.getBoundingClientRect();
+  ['😋','✨','💫'].forEach((ch,i)=>{
+    const b=document.createElement('div'); b.className='pop-burst'; b.textContent=ch;
+    b.style.left=r.left+r.width/2+'px'; b.style.top=r.top+r.height/2+'px';
+    b.style.animationDelay=(i*.06)+'s';
+    document.body.appendChild(b); setTimeout(()=>b.remove(),600);
+  });
+  placed++;
+  const rem=qA-placed, left=qB-placed;
+  document.getElementById('eatCounter').textContent=
+    placed<qB?`كل ${toAr(left)} أكثر!`:`تبقّى ${toAr(rem)} ${cookieEmoji} — اضغط على الجواب!`;
+  if(placed>=qB){interactDone=true;updateHint();}
+}
+
+/* ══════════════════════════════════════
+   HINT
+══════════════════════════════════════ */
+function updateHint(){
+  const hintMap={
+    'add-frame':['tfHint',`أضف ${toAr(qB-placed)} تفاحة للإطار!`],
+    'add-line' :['nlHint', nlDir>0?`اقفز ${toAr(qB-placed)} خطوات للأمام!`:`اقفز ${toAr(qB-placed)} خطوات للخلف!`],
+    'add-merge':['mergeHint',`اضغط "ادمجهم!" لتجمع المجموعتين!`],
+    'sub-balloon':['blnHint',`فقّع ${toAr(qB-placed)} بالونة أكثر!`],
+    'sub-line'   :['nlHint', `اقفز ${toAr(qB-placed)} خطوات للخلف!`],
+    'sub-eat'    :['eatHint',`كل ${toAr(qB-placed)} ${cookieEmoji} أكثر!`],
+  };
+  const [hid,msg]=hintMap[currentMode]||['nlHint',''];
+  const h=document.getElementById(hid); if(!h) return;
+  if(interactDone){h.textContent='ممتاز! اضغط على الجواب أسفله! 👇';h.className='hint-bar ready';}
+  else{h.textContent=msg;h.className='hint-bar';}
+}
+
+/* ══════════════════════════════════════
+   NUMBER PAD
+══════════════════════════════════════ */
+function buildNumPad(){
+  const pad=document.getElementById('numPad'); pad.innerHTML='';
+  const max=currentMode.startsWith('add')?18:9;
+  for(let v=0;v<=max;v++){
+    const btn=document.createElement('button'); btn.className='num-btn'; btn.textContent=v;
+    btn.addEventListener('click',()=>submitAnswer(v,btn));
+    pad.appendChild(btn);
+  }
+}
+
+function submitAnswer(val,btn){
+  if(locked) return;
+  if(!interactDone){
+    const hintIds={'add-frame':'tfHint','add-line':'nlHint','add-merge':'mergeHint','sub-balloon':'blnHint','sub-line':'nlHint','sub-eat':'eatHint'};
+    const h=document.getElementById(hintIds[currentMode]); if(!h) return;
+    h.textContent='أكمل اللعبة أولاً! 🎮';
+    h.style.background='#ffebee';h.style.borderColor='#ef9a9a';h.style.color='#b71c1c';
+    setTimeout(()=>{h.style.background='';h.style.borderColor='';h.style.color='';updateHint();},1200);
+    sfxWrong(); return;
+  }
+  locked=true;
+  if(val===correctAns){
+    btn.classList.add('flash-ok'); sfxCorrect(); stars++; updateStars(); showFb(true);
+    setTimeout(()=>{btn.classList.remove('flash-ok');hideFb();qIdx++;if(qIdx>=5)showWin();else nextQuestion();},1400);
+  } else {
+    btn.classList.add('flash-err'); sfxWrong(); showFb(false);
+    setTimeout(()=>{btn.classList.remove('flash-err');hideFb();locked=false;},900);
+  }
+}
+
+/* ══════════════════════════════════════
+   FEEDBACK / STARS / WIN
+══════════════════════════════════════ */
+function showFb(ok){
+  const icon=document.getElementById('fbIcon'),txt=document.getElementById('fbText');
+  if(ok){icon.textContent=['🎉','⭐','🌟','🥳','🎊'][stars-1]||'🎉';txt.textContent='صحيح! أحسنت!';txt.className='fb-text ok';}
+  else{icon.textContent='🤔';txt.textContent='حاول مرة أخرى!';txt.className='fb-text err';}
+  document.getElementById('fbOverlay').classList.add('show');
+}
+function hideFb(){document.getElementById('fbOverlay').classList.remove('show');}
+
+function updateStars(){
+  for(let i=0;i<5;i++){
+    const s=document.getElementById('s'+i);
+    if(i<stars){s.classList.add('lit');if(i===stars-1)sfxStar();}
+    else s.classList.remove('lit');
+  }
+}
+function showWin(){sfxWin();confetti();showScreen('winScreen');}
+
+function confetti(){
+  const cols=['#FFD700','#FF6B35','#4ECDC4','#A855F7','#6BCB77','#FF6B6B','#FF8FAB','#42A5F5'];
+  for(let i=0;i<70;i++){
+    const c=document.createElement('div'); c.className='cf';
+    c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%cols.length]};width:${8+Math.random()*10}px;height:${8+Math.random()*10}px;animation-delay:${Math.random()*.6}s;animation-duration:${1.5+Math.random()*.8}s;border-radius:${Math.random()>.5?'50%':'3px'};`;
+    document.body.appendChild(c); setTimeout(()=>c.remove(),3000);
+  }
+}
+</script>
+</body>
+</html>
